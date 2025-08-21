@@ -1,20 +1,23 @@
-"""
-Implementation of Multi-head Latent Attention (MLA) from DeepSeek-V2.
+# Implementation of Multi-head Latent Attention (MLA) from DeepSeek-V2.
 
-Original Paper: "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model"
-Author: DeepSeek-AI
-arXiv: https://arxiv.org/abs/2405.04434
+# Original Paper: "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model"
+# Author: DeepSeek-AI
+# arXiv: https://arxiv.org/abs/2405.04434
 
-This is an independent implementation adapted from concepts introduced in the above paper. 
-All credits for the theoretical formulation and architecture design go to the original authors.
-"""
+# This is an independent implementation adapted from concepts introduced in the above paper. 
+# All credits for the theoretical formulation and architecture design go to the original authors.
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchtune.modules import RotaryPositionalEmbeddings
 from dataclasses import dataclass
 
+# Copyright (c) 2021 Phil Wang
+# Licensed under MIT License
+# https://github.com/lucidrains/rotary-embedding-torch
+from rotary_embedding_torch import RotaryEmbedding
+
+# Define MLA config
 @dataclass
 class MLAConfig:
     d_model: int
@@ -26,10 +29,12 @@ class MLAConfig:
     dropout: float = 0.0
     use_bias: bool = False
 
+# Define MLA
 class MLA(nn.Module):
     def __init__(self, config: MLAConfig):
         super(MLA, self).__init__()
 
+        # Initialize config values
         self.config = config
         
         self.d_model = config.d_model
@@ -53,7 +58,7 @@ class MLA(nn.Module):
         self.decompress_v = nn.Linear(self.kv_lora, self.head_dim * self.num_heads, bias=self.use_bias)
         self.output = nn.Linear(self.head_dim * self.num_heads, self.d_model, bias=self.use_bias)
 
-        self.rope = RotaryPositionalEmbeddings(dim=self.rope_dim)
+        self.rope = RotaryEmbedding(dim=self.rope_dim)
         self.q_norm = nn.RMSNorm(self.q_lora)
         self.kv_norm = nn.RMSNorm(self.kv_lora)
         self.res_dropout = nn.Dropout(p=self.dropout)
