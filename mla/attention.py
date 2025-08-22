@@ -81,11 +81,11 @@ class MLA(nn.Module):
 
         q_rope = self.decompress_q_rope(q_compressed)
         q_rope = q_rope.view(batch, seq, self.num_heads, self.rope_dim)
-        q_rope = self.rope(q_rope)
+        q_rope = self.rope.rotate_queries_or_keys(q_rope)
 
         k_rope = self.project_k_rope(x)
         k_rope = k_rope.unsqueeze(2).expand(-1, -1, self.num_heads, -1)
-        k_rope = self.rope(k_rope)
+        k_rope = self.rope.rotate_queries_or_keys(k_rope)
 
         q = torch.cat([q_decompressed, q_rope], dim=-1)
         k = torch.cat([k_decompressed, k_rope], dim=-1)
